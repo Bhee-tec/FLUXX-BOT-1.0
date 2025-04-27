@@ -12,8 +12,8 @@ declare global {
 
 interface TelegramUser {
   id: number
-  first_name?: string
-  last_name?: string
+  firstName?: string
+  lastName?: string
   username?: string
 }
 
@@ -128,9 +128,9 @@ export default function Header({ score }: HeaderProps): React.JSX.Element {
             <div className="flex flex-col min-w-0">
               <span 
                 className="font-bold text-white text-sm md:text-base truncate"
-                title={user.first_name || 'Anonymous'}
+                title={user.firstName || 'Anonymous'}
               >
-                {user.first_name}
+                {user.firstName}
               </span>
               <span className="font-bold text-yellow-300 text-sm md:text-base flex items-center truncate">
                 <span className="mr-1">🪙</span>
@@ -158,7 +158,7 @@ export default function Header({ score }: HeaderProps): React.JSX.Element {
 
       {/* Accessibility Announcements */}
       <div aria-live="polite" className="sr-only">
-        User profile loaded: {user.first_name} - Balance: {balance.toFixed(2)} FLX
+        User profile loaded: {user.firstName} - Balance: {balance.toFixed(2)} FLX
       </div>
     </div>
   )
