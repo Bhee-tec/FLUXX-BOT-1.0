@@ -130,7 +130,7 @@ export default function Header({ score }: HeaderProps): React.JSX.Element {
                 className="font-bold text-white text-sm md:text-base truncate"
                 title={user.first_name || 'Anonymous'}
               >
-                {user.first_name || 'Telegram User'}
+                {user.first_name}
               </span>
               <span className="font-bold text-yellow-300 text-sm md:text-base flex items-center truncate">
                 <span className="mr-1">🪙</span>
