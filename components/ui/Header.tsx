@@ -24,7 +24,7 @@ interface HeaderProps {
 export default function Header({ score }: HeaderProps): React.JSX.Element {
   const [user, setUser] = useState<TelegramUser | null>(null)
   const [error, setError] = useState<string | null>(null)
-  const balance = score / 1000
+  const balance = score / 10000
 
   useEffect(() => {
     const controller = new AbortController()
