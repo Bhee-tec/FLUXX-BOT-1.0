@@ -1,30 +1,26 @@
-import { NextApiRequest, NextApiResponse } from 'next';
-import { prisma }  from 'lib/prisma'; // Assuming you have a prisma instance
+import { NextRequest, NextResponse } from 'next/server';
+import { prisma } from 'lib/prisma';
 
-export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  if (req.method === 'GET') {
-    const { userId } = req.query;
+export async function GET(req: NextRequest) {
+  const userId = req.nextUrl.searchParams.get('userId'); // Use .get() to retrieve the query parameter
 
-    if (!userId) {
-      return res.status(400).json({ error: 'User ID is required' });
-    }
-
-    try {
-      const gameState = await prisma.gameState.findFirst({
-        where: { userId: String(userId) },
-        orderBy: { createdAt: 'desc' }, // Get the most recent game state
-      });
-
-      if (!gameState) {
-        return res.status(404).json({ error: 'Game state not found' });
-      }
-
-      return res.status(200).json(gameState);
-    } catch (err) {
-        console.error('Error fetching game state', err);
-      return res.status(500).json({ error: 'Error fetching game state' });
-    }
+  if (!userId) {
+    return NextResponse.json({ error: 'User ID is required' }, { status: 400 });
   }
 
-  res.status(405).json({ error: 'Method not allowed' });
+  try {
+    const gameState = await prisma.gameState.findFirst({
+      where: { userId: String(userId) },
+      orderBy: { createdAt: 'desc' }, // Get the most recent game state
+    });
+
+    if (!gameState) {
+      return NextResponse.json({ error: 'Game state not found' }, { status: 404 });
+    }
+
+    return NextResponse.json(gameState);
+  } catch (err) {
+    console.error('Error fetching game state:', err);
+    return NextResponse.json({ error: 'Error fetching game state' }, { status: 500 });
+  }
 }
