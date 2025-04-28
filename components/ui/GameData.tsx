@@ -8,10 +8,10 @@ interface GameDataProps {
   totalMoves: number;
 }
 
-export default function GameData({ 
-  score = 0, 
-  currentMoves = 0, 
-  totalMoves = 30 
+export default function GameData({
+  score = 0,
+  currentMoves = 0,
+  totalMoves = 30,
 }: GameDataProps) {
   const [error] = useState<string | null>(null);
   const [isAnimating, setIsAnimating] = useState(false);
@@ -31,11 +31,8 @@ export default function GameData({
       <div className="relative group">
         <div className="absolute inset-0 bg-purple-500/30 blur-3xl animate-pulse"></div>
         <div className="relative flex justify-between items-center bg-gradient-to-r from-purple-500 to-pink-500 backdrop-blur-sm rounded-2xl p-6 shadow-2xl border-2 border-purple-300 border-opacity-50 transition-transform duration-300 hover:scale-105 hover:shadow-glow">
-          
-          {/* Floating Emojis */}
           <div className="absolute -top-4 -left-4 text-3xl animate-bounce">🎮</div>
           <div className="absolute -top-4 -right-4 text-3xl animate-bounce delay-100">🌟</div>
-          
           <div className="text-center z-10">
             <div className="text-sm text-purple-100 font-semibold mb-1">SCORE</div>
             <div className={`text-3xl font-bold bg-gradient-to-r from-yellow-300 to-pink-300 bg-clip-text text-transparent 
@@ -43,9 +40,7 @@ export default function GameData({
               {score.toLocaleString()}
             </div>
           </div>
-          
           <div className="h-8 w-1 bg-white/30 mx-4 rounded-full"></div>
-
           <div className="text-center z-10">
             <div className="text-sm text-purple-100 font-semibold mb-1">MOVES LEFT</div>
             <div className="text-3xl font-bold text-white flex items-center gap-2">
@@ -56,8 +51,6 @@ export default function GameData({
               <span className="text-white/70">/ {totalMoves}</span>
             </div>
           </div>
-
-          {/* Animated Stars */}
           <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
             {[...Array(3)].map((_, i) => (
               <div key={i} className="text-yellow-300 text-xl animate-star">⭐</div>

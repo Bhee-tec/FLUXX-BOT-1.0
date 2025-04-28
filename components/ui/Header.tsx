@@ -1,6 +1,6 @@
 'use client';
 import { WebApp } from "@twa-dev/types";
-import { useEffect, useState } from 'react'
+import { useEffect, useState } from 'react';
 
 declare global {
   interface Window {
@@ -11,43 +11,61 @@ declare global {
 }
 
 interface TelegramUser {
-  id: number
-  firstName?: string
-  lastName?: string
-  username?: string
+  id: number;
+  firstName?: string;
+  lastName?: string;
+  username?: string;
 }
 
 interface HeaderProps {
-  score: number
+  score: number;
 }
 
 export default function Header({ score }: HeaderProps): React.JSX.Element {
-  const [user, setUser] = useState<TelegramUser | null>(null)
-  const [error, setError] = useState<string | null>(null)
-  const balance = score / 1000
+  const [user, setUser] = useState<TelegramUser | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [points, setPoints] = useState<number | null>(null); // Store points
+
+  // Polling function to fetch user data and points
+  const fetchUserData = async () => {
+    try {
+      const response = await fetch('/api/user');
+      if (!response.ok) {
+        throw new Error('Failed to fetch user data');
+      }
+      const userData = await response.json();
+      setUser(userData);
+
+      // Calculate and update points based on user score
+      if (userData?.score !== undefined) {
+        const calculatedPoints = userData.score / 10000;
+        setPoints(calculatedPoints);
+      }
+    } catch (err) {
+      console.error('Error fetching user data:', err);
+      setError('Failed to load user data');
+    }
+  };
 
   useEffect(() => {
-    const controller = new AbortController()
-    
+    const controller = new AbortController();
+
     const initializeApp = async () => {
       try {
-        // Check if running in Telegram context
         if (typeof window === 'undefined' || !window.Telegram?.WebApp) {
-          setError('This app must be opened within Telegram')
-          return
+          setError('This app must be opened within Telegram');
+          return;
         }
 
-        const tg = window.Telegram.WebApp
-        tg.ready()
-        tg.expand() // Expand the WebApp to full height
+        const tg = window.Telegram.WebApp;
+        tg.ready();
+        tg.expand(); // Expand the WebApp to full height
 
-        // Validate user data presence
         if (!tg.initDataUnsafe?.user) {
-          setError('Missing user authentication data')
-          return
+          setError('Missing user authentication data');
+          return;
         }
 
-        // Send both initData and user for backend validation
         const response = await fetch('/api/user', {
           method: 'POST',
           headers: {
@@ -57,27 +75,41 @@ export default function Header({ score }: HeaderProps): React.JSX.Element {
             initData: tg.initData,
             user: tg.initDataUnsafe.user
           }),
-          signal: controller.signal
-        })
+        });
 
-        // Handle HTTP errors
         if (!response.ok) {
-          const errorData = await response.json()
-          throw new Error(errorData.error || `HTTP error! status: ${response.status}`)
+          const errorData = await response.json();
+          throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
         }
 
-        const userData = await response.json()
-        setUser(userData)
+        const userData = await response.json();
+        setUser(userData);
+
+        // Fetch points initially as well
+        if (userData?.score !== undefined) {
+          const calculatedPoints = userData.score / 10000;
+          setPoints(calculatedPoints);
+        }
       } catch (err) {
-        console.error('User initialization error:', err)
-        setError(err instanceof Error ? err.message : 'Failed to load user data')
+        console.error('User initialization error:', err);
+        setError(err instanceof Error ? err.message : 'Failed to load user data');
       }
-    }
+    };
 
-    initializeApp()
+    // Initialize app and fetch initial data
+    initializeApp();
 
-    return () => controller.abort()
-  }, [])
+    // Poll for user data updates every 5 seconds
+    const intervalId = setInterval(() => {
+      fetchUserData();
+    }, 5000);
+
+    // Cleanup on component unmount
+    return () => {
+      clearInterval(intervalId);
+      controller.abort();
+    };
+  }, []);
 
   if (error) {
     return (
@@ -85,7 +117,7 @@ export default function Header({ score }: HeaderProps): React.JSX.Element {
         ⚠️ {error}
         <div aria-live="polite" className="sr-only">Error: {error}</div>
       </div>
-    )
+    );
   }
 
   if (!user) {
@@ -100,7 +132,7 @@ export default function Header({ score }: HeaderProps): React.JSX.Element {
         </div>
         <div aria-live="polite" className="sr-only">Loading user data</div>
       </div>
-    )
+    );
   }
 
   return (
@@ -121,7 +153,7 @@ export default function Header({ score }: HeaderProps): React.JSX.Element {
               />
             ))}
           </div>
-          
+
           {/* User Content */}
           <div className="flex items-center gap-3 min-w-0">
             <span className="text-2xl animate-bounce">⚡</span>
@@ -134,7 +166,7 @@ export default function Header({ score }: HeaderProps): React.JSX.Element {
               </span>
               <span className="font-bold text-yellow-300 text-sm md:text-base flex items-center truncate">
                 <span className="mr-1">🪙</span>
-                {balance.toFixed(2)}
+                {points?.toFixed(2) || (score / 10000).toFixed(2)}
                 <span className="ml-1 text-purple-200">$FLX</span>
               </span>
             </div>
@@ -158,8 +190,8 @@ export default function Header({ score }: HeaderProps): React.JSX.Element {
 
       {/* Accessibility Announcements */}
       <div aria-live="polite" className="sr-only">
-        User profile loaded: {user.firstName} - Balance: {balance.toFixed(2)} FLX
+        User profile loaded: {user.firstName} - Balance: {points?.toFixed(2) || (score / 10000).toFixed(2)} FLX
       </div>
     </div>
-  )
+  );
 }
