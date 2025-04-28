@@ -20,50 +20,21 @@ export default function Game() {
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
   const [notifications, setNotifications] = useState<MatchNotification[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
-  const [userId] = useState<string | null>(null);
-
-  const fetchGameState = async () => {
-    try {
-      const response = await fetch(`/api/getGameState?userId=${userId}`);
-      const data = await response.json();
-      if (data.score !== undefined && data.moves !== undefined) {
-        setScore(data.score);
-        setMoves(data.moves);
-      }
-    } catch (error) {
-      console.error('Error fetching game state:', error);
-    }
-  };
-
-  const updateGameState = async (score: number, moves: number) => {
-    try {
-      await fetch('/api/updateGameState', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ userId, score, moves }),
-      });
-    } catch (error) {
-      console.error('Error updating game state:', error);
-    }
-  };
 
   const createBoard = useCallback(() => {
     let newTiles: Color[];
     do {
       newTiles = Array.from({ length: 64 }, () => COLORS[Math.floor(Math.random() * COLORS.length)]);
     } while (findMatches(newTiles).size > 0 || !hasPossibleMoves(newTiles));
-
+    
     setTiles(newTiles);
   }, []);
 
   useEffect(() => {
-    if (userId) fetchGameState();
     createBoard();
     const interval = setInterval(() => setMoves(30), 60 * 60 * 1000);
     return () => clearInterval(interval);
-  }, [createBoard, userId]);
+  }, [createBoard]);
 
   const handleTileClick = (index: number) => {
     if (isProcessing || moves <= 0) return;
@@ -84,22 +55,22 @@ export default function Game() {
     const row2 = Math.floor(index2 / 8);
     const col2 = index2 % 8;
     return (
-      (Math.abs(row1 - row2) === 1 && col1 === col2) ||
+      (Math.abs(row1 - row2) === 1 && col1 === col2) || 
       (Math.abs(col1 - col2) === 1 && row1 === row2)
     );
   };
 
   const swapTiles = async (index1: number, index2: number) => {
     setIsProcessing(true);
-    setMoves((m) => m - 1);
+    setMoves(m => m - 1);
 
     // Perform swap
     const newTiles = [...tiles];
     [newTiles[index1], newTiles[index2]] = [newTiles[index2], newTiles[index1]];
     setTiles(newTiles);
 
-    await new Promise((resolve) => setTimeout(resolve, 300));
-
+    await new Promise(resolve => setTimeout(resolve, 300));
+    
     const matches = findMatches(newTiles);
     if (matches.size > 0) {
       await handleMatches(matches);
@@ -108,14 +79,13 @@ export default function Game() {
       [newTiles[index1], newTiles[index2]] = [newTiles[index2], newTiles[index1]];
       setTiles([...newTiles]);
     }
-
+    
     setIsProcessing(false);
-    updateGameState(score, moves);  // Update game state after swap
   };
 
   const findMatches = (tileArray: Color[]) => {
     const matched = new Set<number>();
-
+    
     // Horizontal matches
     for (let row = 0; row < 8; row++) {
       for (let col = 0; col < 6; col++) {
@@ -152,21 +122,21 @@ export default function Game() {
 
   const handleMatches = async (matched: Set<number>) => {
     const pointsEarned = matched.size * 5;
-    setScore((s) => s + pointsEarned);
+    setScore(s => s + pointsEarned);
 
     // Show notification
     const firstIndex = Array.from(matched)[0];
     const tileElement = document.getElementById(`tile-${firstIndex}`);
     if (tileElement) {
       const rect = tileElement.getBoundingClientRect();
-      setNotifications((prev) => [
+      setNotifications(prev => [
         ...prev,
         {
           id: Date.now(),
           points: pointsEarned,
-          x: rect.left + rect.width / 2,
-          y: rect.top + rect.height / 2,
-        },
+          x: rect.left + rect.width/2,
+          y: rect.top + rect.height/2
+        }
       ]);
     }
 
@@ -177,13 +147,11 @@ export default function Game() {
     setTiles(newTiles);
 
     // Check for new matches
-    await new Promise((resolve) => setTimeout(resolve, 300));
+    await new Promise(resolve => setTimeout(resolve, 300));
     const newMatches = findMatches(newTiles);
     if (newMatches.size > 0) {
       await handleMatches(newMatches);
     }
-
-    updateGameState(score, moves);  // Update game state after handling matches
   };
 
   const hasPossibleMoves = (tileArray: Color[]) => {
@@ -203,17 +171,18 @@ export default function Game() {
   useEffect(() => {
     if (notifications.length > 0) {
       const timer = setTimeout(() => {
-        setNotifications((prev) => prev.slice(1));
+        setNotifications(prev => prev.slice(1));
       }, 1000);
       return () => clearTimeout(timer);
     }
   }, [notifications]);
 
   return (
-    <div className="max-w-md mx-auto mt-6 mb-6 relative">
+    
+    <div className="max-w-md mx-auto mt-6 mb-6 pb-60 relative">
       <Header score={score} />
       <GameData score={score} currentMoves={moves} totalMoves={30} />
-
+      
       <div className="grid grid-cols-8 gap-1 bg-white p-2 rounded-xl shadow-xl touch-pan-y">
         {tiles.map((color, index) => (
           <button
@@ -230,7 +199,7 @@ export default function Game() {
               ${isProcessing || moves <= 0 ? 'opacity-50 cursor-not-allowed' : 'active:scale-95'}`}
             style={{
               WebkitTapHighlightColor: 'transparent',
-              touchAction: 'manipulation',
+              touchAction: 'manipulation'
             }}
           />
         ))}
@@ -243,7 +212,7 @@ export default function Game() {
           style={{
             left: `${x}px`,
             top: `${y}px`,
-            transform: 'translate(-50%, -50%)',
+            transform: 'translate(-50%, -50%)'
           }}
         >
           +{points}
