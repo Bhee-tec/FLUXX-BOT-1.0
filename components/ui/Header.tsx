@@ -29,7 +29,7 @@ export default function Header({ score }: HeaderProps): React.JSX.Element {
   // Polling function to fetch user data and points
   const fetchUserData = async () => {
     try {
-      const response = await fetch('/api/user');
+      const response = await fetch('/api/getGameState');
       if (!response.ok) {
         throw new Error('Failed to fetch user data');
       }
