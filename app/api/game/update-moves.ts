@@ -1,7 +1,5 @@
-import { PrismaClient } from '@prisma/client';
+import { prisma } from 'lib/prisma'; // ✅ import properly
 import type { NextApiRequest, NextApiResponse } from 'next';
-
-const prisma = new PrismaClient();
 
 export default async function handler(
   req: NextApiRequest,
@@ -18,7 +16,6 @@ export default async function handler(
   }
 
   try {
-    // Find the latest game state for the user
     const latestGameState = await prisma.gameState.findFirst({
       where: { userId },
       orderBy: { createdAt: 'desc' },
@@ -28,7 +25,6 @@ export default async function handler(
       return res.status(404).json({ error: 'GameState not found' });
     }
 
-    // Update the moves
     const updatedGameState = await prisma.gameState.update({
       where: { id: latestGameState.id },
       data: { moves: currentMoves },
@@ -38,7 +34,5 @@ export default async function handler(
   } catch (error) {
     console.error('Error updating moves:', error);
     return res.status(500).json({ error: 'Internal Server Error' });
-  } finally {
-    await prisma.$disconnect();
   }
 }
