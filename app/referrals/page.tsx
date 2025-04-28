@@ -160,3 +160,9 @@ export default function ReferralPage() {
     </div>
   );
 }
+export interface GameDataProps {
+  score: number;
+  currentMoves: number;
+  totalMoves: number;
+  userId: string; // Required userId prop
+}

@@ -1,21 +1,60 @@
 'use client';
 
+import { GameDataProps } from "@/referrals/page";
 import { useState, useEffect } from "react";
-
-interface GameDataProps {
-  score: number;
-  currentMoves: number;
-  totalMoves: number;
-}
 
 export default function GameData({
   score = 0,
   currentMoves = 0,
   totalMoves = 30,
+  userId,
 }: GameDataProps) {
-  const [error] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const [isAnimating, setIsAnimating] = useState(false);
 
+  // Score update effect
+  useEffect(() => {
+    const updateScore = async () => {
+      try {
+        const response = await fetch('/api/game/update-score', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId, score }),
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to update score');
+        }
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to update score');
+      }
+    };
+
+    updateScore();
+  }, [score, userId]);
+
+  // Moves update effect
+  useEffect(() => {
+    const updateMoves = async () => {
+      try {
+        const response = await fetch('/api/game/update-moves', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId, currentMoves }),
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to update moves');
+        }
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to update moves');
+      }
+    };
+
+    updateMoves();
+  }, [currentMoves, userId]);
+
+  // Animation handling
   useEffect(() => {
     setIsAnimating(true);
     const timer = setTimeout(() => setIsAnimating(false), 500);

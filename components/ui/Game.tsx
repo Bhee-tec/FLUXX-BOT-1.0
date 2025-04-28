@@ -181,7 +181,7 @@ export default function Game() {
     
     <div className="max-w-md mx-auto mt-6 mb-6 pb-60 relative">
       <Header score={score} />
-      <GameData score={score} currentMoves={moves} totalMoves={30} />
+      <GameData score={score} currentMoves={moves} totalMoves={30} userId={''} />
       
       <div className="grid grid-cols-8 gap-1 bg-white p-2 rounded-xl shadow-xl touch-pan-y">
         {tiles.map((color, index) => (
