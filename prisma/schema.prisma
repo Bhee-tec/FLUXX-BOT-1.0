@@ -14,25 +14,14 @@ username      String?
 firstName    String?
 lastName     String?
 points        Int          @default(0) // Used for score or balance (e.g., score / 1000 for FLX)
+score         Int          @default(0) // Game score
+moves         Int          @default(30) // Current moves left
 createdAt     DateTime     @default(now())
 updatedAt     DateTime     @updatedAt
-gameStates    GameState[]  // Link to game states
 tasks         Task[]       // Link to tasks
 referrals     Referral[]   // Referrals made by this user
 referredBy    Referral?    @relation("ReferredUser") // User who referred this user
 referralCode  String?      @unique // Unique referral code for the user
-}
-
-model GameState {
-id            String       @id @default(auto()) @map("_id") @db.ObjectId
-userId        String       @db.ObjectId
-user          User         @relation(fields: [userId], references: [id])
-score         Int          @default(0) // Game score
-moves         Int          @default(30) // Current moves left
-tiles         String       // JSON string or comma-separated string of tile colors
-lastPlayed    DateTime     @default(now())
-createdAt     DateTime     @default(now())
-updatedAt     DateTime     @updatedAt
 }
 
 model Task {
