@@ -1,27 +1,81 @@
 'use client';
+import React, { useState, useEffect } from 'react';
 
-import { useState, useEffect } from "react";
-
-interface GameDataProps {
-  score: number;
-  currentMoves: number;
+// Define the structure of the props
+export interface GameDataProps {
+  telegramId: string; // Assuming telegramId is passed as a prop
   totalMoves: number;
 }
 
-export default function GameData({
-  score = 0,
-  currentMoves = 0,
-  totalMoves = 30,
-}: GameDataProps) {
-  const [error] = useState<string | null>(null);
-  const [isAnimating, setIsAnimating] = useState(false);
+const GameData: React.FC<GameDataProps> = ({ telegramId, totalMoves }) => {
+  // States to hold score, currentMoves, and any error message
+  const [score, setScore] = useState<number>(0);
+  const [currentMoves, setCurrentMoves] = useState<number>(0);
+  const [error, setError] = useState<string | null>(null);
 
+  // Fetch score and current moves from the database when the component mounts
   useEffect(() => {
-    setIsAnimating(true);
-    const timer = setTimeout(() => setIsAnimating(false), 500);
-    return () => clearTimeout(timer);
-  }, [score, currentMoves]);
+    const fetchGameData = async () => {
+      try {
+        const response = await fetch(`/api/game?telegramId=${telegramId}`);
+        const data = await response.json();
 
+        if (data.success) {
+          setScore(data.data.score);
+          setCurrentMoves(data.data.moves);
+        } else {
+          setError(data.error || 'Unknown error');
+        }
+      } catch (err) {
+        setError('Failed to fetch game data');
+        console.error('Error fetching game data:', err);
+      }
+    };
+
+    fetchGameData();
+  }, [telegramId]);
+
+  // Function to update score and moves in the database after any change
+  const updateGameData = React.useCallback(async (newScore: number, newMoves: number) => {
+    try {
+      const response = await fetch('/api/game', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          telegramId,
+          score: newScore,
+          moves: newMoves,
+        }),
+      });
+
+      const data = await response.json();
+      if (data.success) {
+        setScore(newScore);
+        setCurrentMoves(newMoves);
+      } else {
+        setError(data.error || 'Failed to update game data');
+      }
+    } catch (err) {
+      setError('Failed to update game data');
+      console.error('Error updating game data:', err);
+    }
+  }, [telegramId]);
+
+  // Function to periodically update game data every 5 seconds
+  useEffect(() => {
+    if (currentMoves === 0) return; // Stop if game is over
+    const interval = setInterval(() => {
+      if (score !== 0 && currentMoves !== totalMoves) {
+        updateGameData(score, currentMoves); // Update periodically
+      }
+    }, 5000); // Update every 5 seconds (adjust as needed)
+
+    return () => clearInterval(interval); // Cleanup on component unmount
+  }, [score, currentMoves, totalMoves, updateGameData]); // Re-run when score, currentMoves, or updateGameData change
+
+  // Display error message if an error occurs
   if (error) {
     return <div className="container mx-auto p-4 text-red-500">{error}</div>;
   }
@@ -35,8 +89,10 @@ export default function GameData({
           <div className="absolute -top-4 -right-4 text-3xl animate-bounce delay-100">🌟</div>
           <div className="text-center z-10">
             <div className="text-sm text-purple-100 font-semibold mb-1">SCORE</div>
-            <div className={`text-3xl font-bold bg-gradient-to-r from-yellow-300 to-pink-300 bg-clip-text text-transparent 
-              ${isAnimating ? 'animate-pulse' : ''}`}>
+            <div
+              className={`text-3xl font-bold bg-gradient-to-r from-yellow-300 to-pink-300 bg-clip-text text-transparent 
+                ${score !== 0 ? 'animate-pulse' : ''}`}
+            >
               {score.toLocaleString()}
             </div>
           </div>
@@ -44,7 +100,7 @@ export default function GameData({
           <div className="text-center z-10">
             <div className="text-sm text-purple-100 font-semibold mb-1">MOVES LEFT</div>
             <div className="text-3xl font-bold text-white flex items-center gap-2">
-              <span className={`${isAnimating ? 'animate-wiggle' : ''}`}>🎯</span>
+              <span>🎯</span>
               <span className="bg-gradient-to-r from-green-300 to-blue-300 bg-clip-text text-transparent">
                 {currentMoves}
               </span>
@@ -58,7 +114,6 @@ export default function GameData({
           </div>
         </div>
       </div>
-
       <style jsx global>{`
         @keyframes pulse {
           0%, 100% { transform: scale(1); }
@@ -88,4 +143,6 @@ export default function GameData({
       `}</style>
     </div>
   );
-}
+};
+
+export default GameData;

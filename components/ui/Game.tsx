@@ -13,7 +13,11 @@ interface MatchNotification {
   y: number;
 }
 
-export default function Game() {
+interface GameProps {
+  userTelegramId: string;
+}
+
+export default function Game({ userTelegramId }: GameProps) {
   const [tiles, setTiles] = useState<Color[]>([]);
   const [score, setScore] = useState<number>(0);
   const [moves, setMoves] = useState<number>(30);
@@ -35,6 +39,18 @@ export default function Game() {
     const interval = setInterval(() => setMoves(30), 60 * 60 * 1000);
     return () => clearInterval(interval);
   }, [createBoard]);
+
+  const updateGameState = async (score: number, moves: number) => {
+    try {
+      await fetch('/api/game', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ score, moves }),
+      });
+    } catch (error) {
+      console.error('Failed to update game state:', error);
+    }
+  };
 
   const handleTileClick = (index: number) => {
     if (isProcessing || moves <= 0) return;
@@ -64,7 +80,6 @@ export default function Game() {
     setIsProcessing(true);
     setMoves(m => m - 1);
 
-    // Perform swap
     const newTiles = [...tiles];
     [newTiles[index1], newTiles[index2]] = [newTiles[index2], newTiles[index1]];
     setTiles(newTiles);
@@ -75,7 +90,6 @@ export default function Game() {
     if (matches.size > 0) {
       await handleMatches(matches);
     } else {
-      // Revert swap
       [newTiles[index1], newTiles[index2]] = [newTiles[index2], newTiles[index1]];
       setTiles([...newTiles]);
     }
@@ -86,7 +100,6 @@ export default function Game() {
   const findMatches = (tileArray: Color[]) => {
     const matched = new Set<number>();
     
-    // Horizontal matches
     for (let row = 0; row < 8; row++) {
       for (let col = 0; col < 6; col++) {
         const index = row * 8 + col;
@@ -102,7 +115,6 @@ export default function Game() {
       }
     }
 
-    // Vertical matches
     for (let col = 0; col < 8; col++) {
       for (let row = 0; row < 6; row++) {
         const index = row * 8 + col;
@@ -122,9 +134,11 @@ export default function Game() {
 
   const handleMatches = async (matched: Set<number>) => {
     const pointsEarned = matched.size * 5;
-    setScore(s => s + pointsEarned);
+    const newScore = score + pointsEarned;
+    setScore(newScore);
 
-    // Show notification
+    updateGameState(newScore, moves);
+
     const firstIndex = Array.from(matched)[0];
     const tileElement = document.getElementById(`tile-${firstIndex}`);
     if (tileElement) {
@@ -134,19 +148,17 @@ export default function Game() {
         {
           id: Date.now(),
           points: pointsEarned,
-          x: rect.left + rect.width/2,
-          y: rect.top + rect.height/2
+          x: rect.left + rect.width / 2,
+          y: rect.top + rect.height / 2,
         }
       ]);
     }
 
-    // Update tiles
     const newTiles = tiles.map((color, index) =>
       matched.has(index) ? COLORS[Math.floor(Math.random() * COLORS.length)] : color
     );
     setTiles(newTiles);
 
-    // Check for new matches
     await new Promise(resolve => setTimeout(resolve, 300));
     const newMatches = findMatches(newTiles);
     if (newMatches.size > 0) {
@@ -176,11 +188,11 @@ export default function Game() {
       return () => clearTimeout(timer);
     }
   }, [notifications]);
-
+      <GameData telegramId={userTelegramId || ''} totalMoves={30} />
   return (
-    <div className="max-w-md mx-auto mt-6 mb-6 relative">
+    <div className="max-w-md mx-auto mt-6 mb-6 pb-60 relative">
       <Header score={score} />
-      <GameData score={score} currentMoves={moves} totalMoves={30} />
+      <GameData telegramId={userTelegramId} totalMoves={30} />
       
       <div className="grid grid-cols-8 gap-1 bg-white p-2 rounded-xl shadow-xl touch-pan-y">
         {tiles.map((color, index) => (

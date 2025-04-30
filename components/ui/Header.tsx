@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 
 declare global {
   interface Window {
-    Telegram?: {
+    Telegram: {
       WebApp: WebApp
     }
   }
